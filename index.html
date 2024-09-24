@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KNN Prediction [DATA MINING]</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>KNN Prediction</h2>
+
+<div class="form-container">
+    <h3>Input Data Training</h3>
+    <label for="x">input X:</label>
+    <input type="number" id="x" name="x"><br><br>
+
+    <label for="y">input Y:</label>
+    <input type="number" id="y" name="y"><br><br>
+
+    <label for="kelas">Kelas:</label>
+    <input type="number" id="kelas" name="kelas" min="0" max="1"><br><br>
+
+    <button class="add" onclick="addData()">Tambah Data</button>
+</div>
+
+<h3>Daftar Data Training</h3>
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th>X</th>
+            <th>Y</th>
+            <th>Kelas</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Data akan muncul di sini -->
+    </tbody>
+</table>
+<br>
+<button class="go" onclick="goToTesting()">Input Testing Data</button>
+
+<div id="testingSection" style="display:none;">
+    <h3>Input Data Testing</h3>
+    <label for="testX">Input X:</label>
+    <input type="number" id="testX" name="testX"><br><br>
+
+    <label for="testY">Input Y:</label>
+    <input type="number" id="testY" name="testY"><br><br>
+
+    <button class="sub" onclick="calculateKNN()">Submit</button>
+</div>
+
+<h3>Hasil Prediksi Lengkap:</h3>
+<table id="resultTable" style="display:none;">
+    <thead>
+        <tr>
+            <th>Data Training (X)</th>
+            <th>Data Training (Y)</th>
+            <th>Kelas</th>
+            <th>Data Testing (X)</th>
+            <th>Data Testing (Y)</th>
+            <th>Distance</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Hasil jarak akan muncul di sini -->
+    </tbody>
+</table>
+
+<h3>Kesimpulan:</h3>
+<p id="result"></p>
+
+<script>
+    let dataTraining = [];
+
+    function addData() {
+        const x = document.getElementById('x').value;
+        const y = document.getElementById('y').value;
+        const kelas = document.getElementById('kelas').value;
+
+        if (x === '' || y === '' || kelas === '') {
+            alert('Semua field harus diisi!');
+            return;
+        }
+
+        dataTraining.push({ x: parseFloat(x), y: parseFloat(y), kelas: parseInt(kelas) });
+        displayData();
+    }
+
+    function displayData() {
+        const tableBody = document.querySelector('#dataTable tbody');
+        tableBody.innerHTML = '';
+        dataTraining.forEach((data, index) => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${data.x}</td>
+                    <td>${data.y}</td>
+                    <td>${data.kelas}</td>
+                    <td><button class="delete" onclick="deleteData(${index})">Delete</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function deleteData(index) {
+        dataTraining.splice(index, 1);
+        displayData();
+    }
+
+    function goToTesting() {
+        if (dataTraining.length === 0) {
+            alert('Masukkan minimal satu data training!');
+            return;
+        }
+        document.getElementById('testingSection').style.display = 'block';
+    }
+
+    function calculateKNN() {
+        const testX = parseFloat(document.getElementById('testX').value);
+        const testY = parseFloat(document.getElementById('testY').value);
+        
+        if (isNaN(testX) || isNaN(testY)) {
+            alert('Data testing harus diisi!');
+            return;
+        }
+
+        // Menghitung jarak Euclidean antara data testing dan data training
+        const distances = dataTraining.map(data => {
+            const distance = Math.sqrt(
+                Math.pow(data.x - testX, 2) + Math.pow(data.y - testY, 2)
+            );
+            return { ...data, distance };
+        });
+
+        // Urutkan berdasarkan jarak
+        distances.sort((a, b) => a.distance - b.distance);
+
+        // Menampilkan hasil dalam tabel
+        const resultTableBody = document.querySelector('#resultTable tbody');
+        resultTableBody.innerHTML = '';
+        distances.forEach(item => {
+            resultTableBody.innerHTML += `
+                <tr>
+                    <td>${item.x}</td>
+                    <td>${item.y}</td>
+                    <td>${item.kelas}</td>
+                    <td>${testX}</td>
+                    <td>${testY}</td>
+                    <td>${item.distance.toFixed(6)}</td>
+                </tr>
+            `;
+        });
+        document.getElementById('resultTable').style.display = 'block';
+
+        // Ambil K tetangga terdekat (K = 3)
+        const K = 3;
+        const nearestNeighbors = distances.slice(0, K);
+
+        // Tentukan kelas mayoritas
+        const kelasCount = { 0: 0, 1: 0 };
+        nearestNeighbors.forEach(neighbor => {
+            kelasCount[neighbor.kelas] += 1;
+        });
+
+        const predictedClass = kelasCount[0] > kelasCount[1] ? 0 : 1;
+        document.getElementById('result').textContent = `Distance terkecil pada data berada di kelas: ${predictedClass}`;
+    }
+</script>
+<footer>
+    <div class="footer">
+        <h3>
+            Terima kasih telah berkunjung 🙏😭
+        </h3>
+        <p>project by <a href="https://github.com/danu-0">Danz0</a></p>
+    </div>
+</footer>
+
+</body>
+</html>
